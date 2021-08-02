@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+
+ <script src="https://code.jquery.com/jquery-3.4.1.js"   
+	integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU=" crossorigin="anonymous" >
+</script>
+
+<title>환율계산기</title>
+</head>
+<body>
+<h1>환율계산기</h1>
+<div>
+	<span>송금국가: 미국(USD)</span>
+</div>
+<div>
+	<p>수취국가:
+		<select id="selectCountry" onchange="onChangeCountry(this.value);">
+			<option value="KRW">한국(KRW)</option>
+			<option value="JPY">일본(JPY)</option>
+			<option value="PHP">필리핀(PHP)</option>
+		</select>
+	</p>
+</div>
+<div>
+	<p>환율: 
+		<span id="exchangeRate"></span>
+	</p>
+</div>
+<div>
+	<p>송금액: 
+		<input type="text" id="remittancAmount" onKeypress="javascript:if(event.keyCode==13) {calculateExchangeRate()}" />
+	</p>
+</div>
+<div>
+	<button id="submitExchangeRate" onclick="calculateExchangeRate()">Submit</button>
+	<p id="resultPrice" style="display: none;"></p>
+</div>
+
+<script type="text/javascript">
+// USD, JPY, PHP 환율정보 변수 선언 
+var krwExchangeVal = "";
+var jpyExchangeVal = "";
+var phpExchangeVal = "";
+
+// 환율정보 조회 성공 여부
+var apiCallSuccessYn = "N";
+
+$(document).ready(function() {
+	
+	// 환율정보 api 호출 
+	$.ajax({
+		url : "/api/getExchangeRate.ajax",
+		dataType : "json",
+		data : {
+			'url' : 'http://api.currencylayer.com/live?access_key=e526110ddf705b3d2ebdd3ba2757f4f3&format=1'
+		},
+		type : "GET",
+		contentType:"application/json;charset=UTF-8",
+		success : function(result) {
+			// 에러 방지 
+			if (result != null && result != undefined) {
+				
+				apiCallSuccessYn = result.success;
+				
+				// api 호출 성공 시 
+				if (result.success == 'Y') {
+					krwExchangeVal = result.USDKRW;	// KRW 환율 
+					jpyExchangeVal = result.USDJPY; // JPY 환율 
+					phpExchangeVal = result.USDPHP; // PHP 환율 
+					
+					// 최초에 KRW로 세팅 
+					$("#exchangeRate").text(returnComma(krwExchangeVal) + ' KRW/USD');
+				
+				// api 호출 실패 시 
+				} else {
+					alert("환율 정보 조회 중 오류가 발생하였습니다.");
+				}
+				
+			} else {
+				alert("환율 정보 조회 중 오류가 발생하였습니다.");
+			}
+		},
+		error : function(error) {
+			alert("환율 정보 조회 중 오류가 발생하였습니다.");
+		}
+	});
+});
+
+// 최종금액 계산
+function calculateExchangeRate() {
+	
+	// 환율정보 조회 실패 시 동작되지 않도록 유효성 체크 
+	// 딱히 실패한 적이 없긴한데 웹사이트가 항상 조회될거란 보장도 없어서 추가
+	if (apiCallSuccessYn == "N") {
+		alert("환율정보 조회를 위해 새로고침 후 시도해주세요.");
+		return;
+	}
+	
+	// 송금액 유효성 체크
+	if ($("#remittancAmount").val() == '' || $("#remittancAmount").val() == 0 || $("#remittancAmount").val() > 10000) {
+		alert("송금액이 바르지 않습니다.");
+		return;
+	}
+	
+	var price = 0;
+	
+	if ($("#selectCountry").val() == "KRW") {
+		price = parseInt($("#remittancAmount").val()) * krwExchangeVal;
+		
+	} else if ($("#selectCountry").val() == "JPY") {
+		price = parseInt($("#remittancAmount").val()) * jpyExchangeVal;
+		
+	} else {
+		price = parseInt($("#remittancAmount").val()) * phpExchangeVal;
+	}
+	
+	$("#resultPrice").text('수취금액은 ' + returnComma(price) + ' ' + $("#selectCountry").val() + ' 입니다.');
+	$("#resultPrice").show();
+}
+
+// 환율 3자리 수 comma
+function returnComma(value) {
+	return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+// 수취국가 select box onchange
+function onChangeCountry(value) {
+	
+	// 환율정보 조회 실패 시 동작되지 않도록 유효성 체크 
+	if (apiCallSuccessYn == "N") {
+		alert("환율정보 조회를 위해 새로고침 후 시도해주세요.");
+		return;
+	}
+	
+	$("#remittancAmount").val('');
+	$("#resultPrice").hide();
+	
+	// KRW 	환율 
+	 if (value == "KRW") {
+		 $("#exchangeRate").text(returnComma(krwExchangeVal) + ' KRW/USD');
+		 
+	// JPY 환율 	 
+	 } else if (value == "JPY") {
+		 $("#exchangeRate").text(returnComma(jpyExchangeVal) + ' JPY/USD');
+		 
+	// PHP 환율 
+	 } else if (value == "PHP") {
+		 $("#exchangeRate").text(returnComma(phpExchangeVal) + ' PHP/USD');
+	 }
+}
+</script>
+
+</body>
+</html>
