@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class HomeController {
 	
 	/*
-	 * root context 화면 이
+	 * root context 화면 이동 
 	 * */
 	@RequestMapping("/")
 	public String index() {	
