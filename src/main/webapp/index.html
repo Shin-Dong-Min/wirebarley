@@ -44,9 +44,6 @@ var krwExchangeVal = "";
 var jpyExchangeVal = "";
 var phpExchangeVal = "";
 
-// 환율정보 조회 성공 여부
-var apiCallSuccessYn = "N";
-
 $(document).ready(function() {
 	
 	// 환율정보 api 호출 
@@ -61,8 +58,6 @@ $(document).ready(function() {
 		success : function(result) {
 			// 에러 방지 
 			if (result != null && result != undefined) {
-				
-				apiCallSuccessYn = result.success;
 				
 				// api 호출 성공 시 
 				if (result.success == 'Y') {
@@ -90,14 +85,6 @@ $(document).ready(function() {
 
 // 최종금액 계산
 function calculateExchangeRate() {
-	
-	// 환율정보 조회 실패 시 동작되지 않도록 유효성 체크 
-	// 딱히 실패한 적이 없긴한데 웹사이트가 항상 조회될거란 보장도 없어서 추가
-	if (apiCallSuccessYn == "N") {
-		alert("환율정보 조회를 위해 새로고침 후 시도해주세요.");
-		return;
-	}
-	
 	// 송금액 유효성 체크
 	if ($("#remittancAmount").val() == '' || $("#remittancAmount").val() == 0 || $("#remittancAmount").val() > 10000) {
 		alert("송금액이 바르지 않습니다.");
@@ -116,7 +103,7 @@ function calculateExchangeRate() {
 		price = parseInt($("#remittancAmount").val()) * phpExchangeVal;
 	}
 	
-	$("#resultPrice").text('수취금액은 ' + returnComma(price) + ' ' + $("#selectCountry").val() + ' 입니다.');
+	$("#resultPrice").text('수취금액은 ' + returnComma(price.toFixed(2)) + ' ' + $("#selectCountry").val() + ' 입니다.');
 	$("#resultPrice").show();
 }
 
@@ -127,13 +114,6 @@ function returnComma(value) {
 
 // 수취국가 select box onchange
 function onChangeCountry(value) {
-	
-	// 환율정보 조회 실패 시 동작되지 않도록 유효성 체크 
-	if (apiCallSuccessYn == "N") {
-		alert("환율정보 조회를 위해 새로고침 후 시도해주세요.");
-		return;
-	}
-	
 	$("#remittancAmount").val('');
 	$("#resultPrice").hide();
 	
